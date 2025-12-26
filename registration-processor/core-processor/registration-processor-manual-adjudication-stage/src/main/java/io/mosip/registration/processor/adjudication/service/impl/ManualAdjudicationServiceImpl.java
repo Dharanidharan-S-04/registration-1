@@ -919,9 +919,29 @@ public class ManualAdjudicationServiceImpl implements ManualAdjudicationService 
 								LogDescription description) throws com.fasterxml.jackson.core.JsonProcessingException {
 
 		boolean isTransactionSuccessful = false;
-		String statusCode = manualVerificationDTO.getReturnValue() == 1 &&
-				CollectionUtils.isEmpty(manualVerificationDTO.getCandidateList().getCandidates()) ?
-				ManualVerificationStatus.APPROVED.name() : ManualVerificationStatus.REJECTED.name();
+		// String statusCode = manualVerificationDTO.getReturnValue() == 1 &&
+		// 		CollectionUtils.isEmpty(manualVerificationDTO.getCandidateList().getCandidates()) ?
+		// 		ManualVerificationStatus.APPROVED.name() : ManualVerificationStatus.REJECTED.name();
+
+		String statusCode = "";
+
+		if (manualVerificationDTO.getCandidateList() != null &&
+				manualVerificationDTO.getCandidateList().getCandidates() != null &&
+				!manualVerificationDTO.getCandidateList().getCandidates().isEmpty()) {
+
+			JSONObject analytics = manualVerificationDTO.getCandidateList()
+					.getCandidates().get(0).getAnalytics();
+			String comments = (analytics != null && analytics.get("primaryOperatorComments") != null)
+					? analytics.get("primaryOperatorComments").toString() : "";
+
+			boolean isMatched = "MATCHED".equalsIgnoreCase(comments);
+
+			if (!isMatched) {
+				statusCode = ManualVerificationStatus.APPROVED.name();
+			} else {
+				statusCode = ManualVerificationStatus.REJECTED.name();
+			}
+		}
 
 		for (int i = 0; i < entities.size(); i++) {
 			byte[] responsetext = mapper.writeValueAsBytes(manualVerificationDTO);
@@ -1074,3 +1094,4 @@ public class ManualAdjudicationServiceImpl implements ManualAdjudicationService 
 
 
 }
+
